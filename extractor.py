@@ -105,4 +105,4 @@ if __name__ == '__main__':
                 elapsedtime = time.time() - starttime
                 starttime = time.time()
                 print(
-                    f"Time to submit {reportfreq} files is currently {elapsedtime} seconds. Throttle is {throttle}, and the process list is {len(pidlist)} entries long.")
+                    f"Time to submit {reportfreq} jobs is currently {elapsedtime} seconds. Throttle is {throttle}, and the process list is {len(pidlist)} entries long.")
