@@ -22,9 +22,12 @@ linenumber = 0
 
 
 def read_throttle():
-    throttle_file = open(throttle_filename)
-    throttlevalue = int(throttle_file.read())
-    throttle_file.close()
+    with open(throttle_filename) as throttle_file:
+        throttlevalue = 1  # assume the worst case scenario, we drop back to single streaming
+        try:
+            throttlevalue = int(throttle_file.read())
+        except:
+            pass
     return throttlevalue
 
 
@@ -88,14 +91,8 @@ if __name__ == '__main__':
                     if eachprocess.poll() is not None:
                         pidlist.remove(eachprocess)
 
-                # whilst we seem to be busy, lets see if we have a new throttle value; someone may have changed it.
-                oldthrottle = throttle
-                throttle = read_throttle()
-                if oldthrottle != throttle:
-                    print("New throttle detected:", throttle)
-
             # we'll also check for a new throttle value every "reportfreq" statements, and we'll report
-            # on the speed at the same time.
+            # on the submission speed at the same time.
             if linenumber % reportfreq == 0:
                 oldthrottle = throttle
                 throttle = read_throttle()
