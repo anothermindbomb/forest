@@ -4,7 +4,7 @@ This is extractor for Project forest.
 It submits the extraction statements in parallel. Number of concurrent threads is controlled by the value read from the
 throttle file in the installation directory.
 
-throttle is re-read every 100 extractions, which may vary as I tune the code.
+throttle is re-read periodically, and can be set by the user.
 '''
 
 import time
@@ -16,8 +16,8 @@ checkpointfile_filename = r"checkpoint.txt"
 throttle_filename = r"throttle"
 switches = [" /LOG+:robocopy.output", " /NJH", " /NJS", " /NDL", " /NP"]
 reportfreq = 100
-checksums_required = False
-cksum_command = r'C:/cygwin/bin/sha256sum.exe'
+checksums_required = True
+cksum_command = r'C:/cygwin64/bin/sha256sum.exe'
 linenumber = 0
 
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     if checksums_required:
         checksum_results = open("checksum_results.txt", mode="w")
     else:
-        checksum_results = open(sys.stdout)
+        checksum_results = sys.stdout
 
     throttle = read_throttle()
     print("Throttle is set to ", throttle)
@@ -104,4 +104,5 @@ if __name__ == '__main__':
 
                 elapsedtime = time.time() - starttime
                 starttime = time.time()
-                print("Time to submit {0} files is currently {1} seconds. Throttle is {2}, and the process list is {3} entries long.".format(reportfreq, elapsedtime, throttle, len(pidlist)))
+                print(
+                    f"Time to submit {reportfreq} files is currently {elapsedtime} seconds. Throttle is {throttle}, and the process list is {len(pidlist)} entries long.")
