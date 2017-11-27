@@ -16,6 +16,7 @@ if __name__ == '__main__':
     for root, dirs, files in os.walk(source):
         for file in files:
             filename, suffix = os.path.splitext(file)
+            suffix = suffix.lower()
             if filetypes.get(suffix) is None:
                 filetypes[suffix] = 1
             else:
