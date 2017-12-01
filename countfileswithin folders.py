@@ -2,7 +2,7 @@
 """
 Walk the directory tree, starting at "source". Count the number of files within each directory
 
-Steve 10/11/2017
+Steve 27/11/2017
 """
 
 import os.path

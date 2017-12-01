@@ -8,7 +8,7 @@ Steve 10/11/2017
 import os
 
 # source = r"H:\testdata\F0"
-source = r'D:\\'
+source = r'P:\\'
 filetypes = {}
 
 if __name__ == '__main__':
