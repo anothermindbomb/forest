@@ -54,16 +54,18 @@ if __name__ == '__main__':
 
     pidlist = []
 
-    with open(extractioncommands) as commands:
+    commands = open(extractioncommands)
+    statement = commands.readline()
+
+    with statement:
         while True:
-            statement = commands.readline()
             linenumber += 1
 
             if linenumber <= checkpoint_value:  # skip over lines earlier than our checkpoint
                 continue
 
             if len(statement) == 0:  # skip over any erroneous blank lines
-                break
+                continue
 
             command = statement.split(" ")[0]
             sourcedirectory = statement.split(" ")[1]
@@ -90,6 +92,7 @@ if __name__ == '__main__':
                 for eachprocess in pidlist:
                     if eachprocess.poll() is not None:
                         pidlist.remove(eachprocess)
+                time.sleep(0.01)
 
             # we'll also check for a new throttle value every "reportfreq" statements, and we'll report
             # on the submission speed at the same time.
@@ -103,3 +106,5 @@ if __name__ == '__main__':
                 starttime = time.time()
                 print(
                     f"Time to submit {reportfreq} jobs is currently {elapsedtime} seconds. Throttle is {throttle}.")
+
+        statement = commands.readline()
