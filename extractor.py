@@ -34,7 +34,7 @@ def read_throttle():
 if __name__ == '__main__':
 
     if checksums_required:
-        checksum_results = open("checksum_results.txt", mode="w")
+        checksum_results = open("checksum_results.txt", mode="w", newline='\n\r')
     else:
         checksum_results = sys.stdout
 
