@@ -7,8 +7,7 @@ Steve 10/11/2017
 
 import os
 
-# source = r"H:\testdata\F0"
-source = r'D:\\'
+source = r'D:/output/'
 filetypes = {}
 
 if __name__ == '__main__':
@@ -16,6 +15,7 @@ if __name__ == '__main__':
     for root, dirs, files in os.walk(source):
         for file in files:
             filename, suffix = os.path.splitext(file)
+            suffix = suffix.lower()
             if filetypes.get(suffix) is None:
                 filetypes[suffix] = 1
             else:
