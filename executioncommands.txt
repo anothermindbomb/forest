@@ -1,0 +1,9 @@
+docid1.tif
+update dolphin_table set firstname = 'xxx', surname='xxx', etc for docid1.tif
+delete docid1.tif && link docid1.tif tif_replacement.tif
+docid2.pdf
+update dolphin_table set firstname = 'xxx', surname='xxx', etc for docid2.pdf
+delete docid2.pdf && link docid2.pdf pdf_replacement.pdf
+docid3.doc
+update dolphin_table set firstname = 'xxx', surname='xxx', etc for docid3.doc
+delete docid3.doc && link docid3.doc doc_replacement.doc
