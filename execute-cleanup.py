@@ -33,10 +33,10 @@ def update_dolphin_database(dolphindb, sql):
     try:
         cursor = dolphindb.cursor()
         cursor.execute(sql)
-        dolphindb.commit()
+        returned_output = dolphindb.commit() # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Dolphin database Failed with {0}, sql = {1}".format(e, sql))
-        dolphindb.rollback()
+        returned_output = dolphindb.rollback()
         return -1
     return 0
 
@@ -45,10 +45,10 @@ def update_transactions(sqlitedb, docid):
     try:
         cursor = sqlitedb.cursor()
         cursor.execute("update transactions set is_processed = 1 where docid='{0}'".format(docid))
-        sqlitedb.commit()
+        returned_output = sqlitedb.commit() # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Transaction database update failed with {0}, sql = {1}".format(e, sql))
-        sqlitedb.rollback()
+        returned_output = sqlitedb.rollback()
         return -1
     return 0
 
@@ -90,11 +90,12 @@ if __name__ == '__main__':
 
     while True:
 
-        if time.time() > endtime:
+        if time.time() > endtime:  # quite when we run out of time.
             break
 
         returned_rows = cursor.fetchmany(1000)
-        if len(returned_rows) == 0:
+
+        if len(returned_rows) == 0:  # quit when we run out of transactions.
             break
 
         for row in returned_rows:
@@ -116,7 +117,7 @@ if __name__ == '__main__':
             if dos_cmd_rc == 0 & sql_update_rc == 0:
                 update_transactions(sqlitedb, docid)
 
-            time.sleep(1)
+            time.sleep(0.1)  # sleep for a fraction of a second. Tune depending on what Production can handle
 
 produce_run_report()
 sqlitedb.close()
