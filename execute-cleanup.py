@@ -10,6 +10,8 @@ sqliteDatabase_name = "dolphincommands"
 minutes_to_run = 1  # number of minutes we execute for upon each invocation.
 logging_filename = 'dolphin-cleanup' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
 reportfile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
+# this connection string will need to be modified for the  Dolphin Database itself...
+DolphinDBConnectionString = "Driver={ODBC Driver 13 for SQL Server};Server=DAYSTATE\SQLEXPRESS;Database=DolphinDB;Trusted_Connection=yes;"
 
 
 def open_database(db_name):
@@ -17,16 +19,12 @@ def open_database(db_name):
     return db
 
 
-def open_Dolphin_database(DBname):
-    db = pyodbc.connect("Driver={ODBC Driver 13 for SQL Server};"
-                        "Server=DAYSTATE\SQLEXPRESS;"
-                        "Database=DolphinDB;"
-                        "Trusted_Connection=yes;")
+def open_Dolphin_database(DBConnString):
+    db = pyodbc.connect(DBConnString)
     return db
 
 
 def execute_dos_cmd(dos_cmd):
-    rc = 0
     rc = subprocess.call(dos_cmd, shell=True)
     return rc
 
@@ -36,7 +34,7 @@ def update_dolphin_database(dolphindb, sql):
         cursor = dolphindb.cursor()
         cursor.execute(sql)
         dolphindb.commit()
-    except pyodbc.OperationalError as e:
+    except Exception as e:
         logging.fatal("Dolphin database Failed with {0}, sql = {1}".format(e, sql))
         dolphindb.rollback()
         return -1
@@ -49,7 +47,7 @@ def update_transactions(sqlitedb, docid):
         cursor.execute("update transactions set is_processed = 1 where docid='{0}'".format(docid))
         sqlitedb.commit()
     except Exception as e:
-        logging.fatal("Transaction update failed with {0}, sql = {1}".format(e, sql))
+        logging.fatal("Transaction database update failed with {0}, sql = {1}".format(e, sql))
         sqlitedb.rollback()
         return -1
     return 0
@@ -59,19 +57,19 @@ def produce_run_report():
     print("producing run report")
     cursor.execute('SELECT COUNT(*) FROM transactions WHERE is_processed IS NULL;')
     records_left = cursor.fetchone()[0]
-    cursor.execute('SELECT count(*) FROM transactions WHERE transactions.error_message IS NOT NULL;')
-    total_errors = cursor.fetchone()[0]
-    print("{0} records left to process in future runs\n{1} errors encountered in total\n".format(records_left,
-                                                                                                 total_errors))
+    # cursor.execute('SELECT count(*) FROM transactions WHERE transactions.error_message IS NOT NULL;')
+    # total_errors = cursor.fetchone()[0]
+    logging.info("{0} records left to process in future runs".format(records_left))
+    # logging.info("{1} errors encountered in total".format(total_errors))
     return
 
 
-def test_dolphin_retrieval(dolphindb):
-    cursor = dolphindb.cursor()
-    cursor.execute("SELECT * FROM dolphintable")
-    output = cursor.fetchall()
-    for line in output:
-        print(line)
+# def test_dolphin_retrieval(dolphindb):  # this is only used in development so ensure SQL server connections were working
+#     cursor = dolphindb.cursor()
+#     cursor.execute("SELECT * FROM dolphintable")
+#     output = cursor.fetchall()
+#     for line in output:
+#         print(line)
 
 
 if __name__ == '__main__':
@@ -82,7 +80,7 @@ if __name__ == '__main__':
     sqlitedb = open_database(sqliteDatabase_name)
     logging.info("Tranaction Database opened")
 
-    dolphindb = open_Dolphin_database("DolphinDB")
+    dolphindb = open_Dolphin_database(DolphinDBConnectionString)
     logging.info("Dolphin Database opened")
 
     # test_dolphin_retrieval(dolphindb)
