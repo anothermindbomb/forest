@@ -1,4 +1,3 @@
-# coding=utf-8
 """
 This is extractor for Project forest.
 
@@ -42,7 +41,7 @@ if __name__ == '__main__':
         checksum_errors = open("checksum_errors.txt", mode="a", newline="\r\n")
     else:
         checksum_results = sys.stdout
-        checksum_results = sys.stderr
+        checksum_errors = sys.stderr
 
     throttle = read_throttle()
     print("Throttle is set to ", throttle)
@@ -92,10 +91,10 @@ if __name__ == '__main__':
 
             while len(pidlist) >= throttle:
                 # check the pidlist, removing any completed processes
+                time.sleep(0.01)
                 for eachprocess in pidlist:
                     if eachprocess.poll() is not None:
                         pidlist.remove(eachprocess)
-                time.sleep(0.01)
 
             # we'll also check for a new throttle value every "reportfreq" statements, and we'll report
             # on the submission speed at the same time.
@@ -109,7 +108,6 @@ if __name__ == '__main__':
                 start_time = time.time()
                 print("{3} Time to submit {0} jobs was {1} seconds. Throttle is {2}.".format(reportfreq, elapsed_time,
                                                                                              throttle,
-                                                                                             datetime.datetime.now().strftime(
-                                                                                                 '%Y-%m-%d %H:%M:%S')))
+                                                                                             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
             statement = commands.readline()
