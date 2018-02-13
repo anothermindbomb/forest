@@ -6,12 +6,14 @@ import time
 import logging
 import pyodbc
 
-sqliteDatabase_name = "dolphincommands"
-minutes_to_run = 1  # number of minutes we execute for upon each invocation.
-logging_filename = 'dolphin-cleanup' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
-reportfile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
-# this connection string will need to be modified for the  Dolphin Database itself...
-DolphinDBConnectionString = "Driver={ODBC Driver 13 for SQL Server};Server=DAYSTATE\SQLEXPRESS;Database=DolphinDB;Trusted_Connection=yes;"
+SQLDriverName = "{ODBC Driver 13 for SQL Server}"
+DolphinServerName = "DAYSTATE\SQLEXPRESS"
+DolphinDatabaseName = "DolphinDB"
+TransactionDatabaseName = "dolphincommands"
+MaxExecutuionMinutes = 1  # number of minutes we execute for upon each invocation.
+LoggingFilename = 'dolphin-cleanup' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
+ReportFile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
+DolphinDBConnectionString = "Driver=" + SQLDriverName + ";Server=" + DolphinServerName + ";Database=" + DolphinDatabaseName + ";Trusted_Connection=yes;"
 
 
 def open_database(db_name):
@@ -33,7 +35,7 @@ def update_dolphin_database(dolphindb, sql):
     try:
         cursor = dolphindb.cursor()
         cursor.execute(sql)
-        returned_output = dolphindb.commit() # we just consume the "rows updated" message
+        returned_output = dolphindb.commit()  # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Dolphin database Failed with {0}, sql = {1}".format(e, sql))
         returned_output = dolphindb.rollback()
@@ -45,10 +47,10 @@ def update_transactions(sqlitedb, docid):
     try:
         cursor = sqlitedb.cursor()
         cursor.execute("update transactions set is_processed = 1 where docid='{0}'".format(docid))
-        returned_output = sqlitedb.commit() # we just consume the "rows updated" message
+        _ = sqlitedb.commit()  # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Transaction database update failed with {0}, sql = {1}".format(e, sql))
-        returned_output = sqlitedb.rollback()
+        _ = sqlitedb.rollback()
         return -1
     return 0
 
@@ -73,12 +75,12 @@ def produce_run_report():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(filename=logging_filename, level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.basicConfig(filename=LoggingFilename, level=logging.DEBUG, format='%(asctime)s %(message)s')
     starttime = time.time()
-    endtime = time.time() + (minutes_to_run * 60)
+    endtime = time.time() + (MaxExecutuionMinutes * 60)
 
-    sqlitedb = open_database(sqliteDatabase_name)
-    logging.info("Tranaction Database opened")
+    sqlitedb = open_database(TransactionDatabaseName)
+    logging.info("Transaction Database opened")
 
     dolphindb = open_Dolphin_database(DolphinDBConnectionString)
     logging.info("Dolphin Database opened")
@@ -90,10 +92,10 @@ if __name__ == '__main__':
 
     while True:
 
-        if time.time() > endtime:  # quite when we run out of time.
+        if time.time() > endtime:  # quit when we run out of time.
             break
 
-        returned_rows = cursor.fetchmany(1000)
+        returned_rows = cursor.fetchmany(100)
 
         if len(returned_rows) == 0:  # quit when we run out of transactions.
             break
