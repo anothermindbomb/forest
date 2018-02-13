@@ -21,36 +21,36 @@ def open_database(db_name):
     return db
 
 
-def open_Dolphin_database(DBConnString):
-    db = pyodbc.connect(DBConnString)
+def open_dolphin_database(connection):
+    db = pyodbc.connect(connection)
     return db
 
 
-def execute_dos_cmd(dos_cmd):
-    rc = subprocess.call(dos_cmd, shell=True)
+def execute_dos_cmd(cmd):
+    rc = subprocess.call(cmd, shell=True)
     return rc
 
 
-def update_dolphin_database(dolphindb, sql):
+def update_dolphin_database(dbname, updatesql):
     try:
-        cursor = dolphindb.cursor()
-        cursor.execute(sql)
-        returned_output = dolphindb.commit()  # we just consume the "rows updated" message
+        dolphincursor = dbname.cursor()
+        dolphincursor.execute(updatesql)
+        _ = dbname.commit()  # we just consume the "rows updated" message
     except Exception as e:
-        logging.fatal("Dolphin database Failed with {0}, sql = {1}".format(e, sql))
-        returned_output = dolphindb.rollback()
+        logging.fatal("Dolphin database Failed with {0}, sql = {1}".format(e, updatesql))
+        _ = dbname.rollback()
         return -1
     return 0
 
 
-def update_transactions(sqlitedb, docid):
+def update_transactions(transactiondb, documentid):
     try:
-        cursor = sqlitedb.cursor()
-        cursor.execute("update transactions set is_processed = 1 where docid='{0}'".format(docid))
-        _ = sqlitedb.commit()  # we just consume the "rows updated" message
+        transactioncursor = transactiondb.cursor()
+        transactioncursor.execute("update transactions set is_processed = 1 where docid='{0}'".format(documentid))
+        _ = transactiondb.commit()  # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Transaction database update failed with {0}, sql = {1}".format(e, sql))
-        _ = sqlitedb.rollback()
+        _ = transactiondb.rollback()
         return -1
     return 0
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     sqlitedb = open_database(TransactionDatabaseName)
     logging.info("Transaction Database opened")
 
-    dolphindb = open_Dolphin_database(DolphinDBConnectionString)
+    dolphindb = open_dolphin_database(DolphinDBConnectionString)
     logging.info("Dolphin Database opened")
 
     # test_dolphin_retrieval(dolphindb)
