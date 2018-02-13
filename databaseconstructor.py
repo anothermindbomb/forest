@@ -22,8 +22,7 @@ def create_database_table(db_name):
     cursor.execute('''
 CREATE TABLE transactions
 (
-  docid TEXT
-    PRIMARY KEY,
+  docid TEXT PRIMARY KEY,
   update_sql TEXT,
   del_and_link_cmd TEXT,
   is_processed BOOLEAN,
