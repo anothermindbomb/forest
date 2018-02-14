@@ -37,7 +37,7 @@ def update_dolphin_database(dbname, updatesql):
         dolphincursor.execute(updatesql)
         _ = dbname.commit()  # we just consume the "rows updated" message
     except Exception as e:
-        logging.fatal("Dolphin database Failed with {0}, sql = {1}".format(e, updatesql))
+        logging.fatal("Dolphin database update failed with {0}, sql = {1}".format(e, updatesql))
         _ = dbname.rollback()
         return -1
     return 0
