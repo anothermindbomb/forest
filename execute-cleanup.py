@@ -43,10 +43,11 @@ def update_dolphin_database(dbname, updatesql):
     return 0
 
 
-def update_transactions(transactiondb, documentid):
+def update_transactions(transactiondb, documentid, sql):
     try:
         transactioncursor = transactiondb.cursor()
-        transactioncursor.execute("update transactions set is_processed = 1 where docid='{0}'".format(documentid))
+        transactioncursor.execute(
+            "update transactions set is_processed = 1 where docid='{0}' AND update_sql='{1}'".format(documentid, sql))
         _ = transactiondb.commit()  # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Transaction database update failed with {0}, sql = {1}".format(e, sql))
@@ -117,7 +118,7 @@ if __name__ == '__main__':
 
             # if both the delete/link AND the SQL update commited ok, then we mark this transaction as complete.
             if dos_cmd_rc == 0 & sql_update_rc == 0:
-                update_transactions(sqlitedb, docid)
+                update_transactions(sqlitedb, docid, sql)
 
             time.sleep(0.1)  # sleep for a fraction of a second. Tune depending on what Production can handle
 
