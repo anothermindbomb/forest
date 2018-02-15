@@ -6,6 +6,9 @@ import time
 import logging
 import pyodbc
 
+
+TestModeEnabled=True # If we set this to true, then no commits will be issued on Dolphin.
+
 SQLDriverName = "{ODBC Driver 13 for SQL Server}"
 DolphinServerName = "DAYSTATE\SQLEXPRESS"
 DolphinDatabaseName = "DolphinDB"
@@ -35,7 +38,10 @@ def update_dolphin_database(dbname, updatesql):
     try:
         dolphincursor = dbname.cursor()
         dolphincursor.execute(updatesql)
-        _ = dbname.commit()  # we just consume the "rows updated" message
+        if TestModeEnabled:
+            _ = dbname.rollback() # we just consume the "rows rolled back" message
+        else:
+            _ = dbname.commit()  # we just consume the "rows updated" message
     except Exception as e:
         logging.fatal("Dolphin database update failed with {0}, sql = {1}".format(e, updatesql))
         _ = dbname.rollback()
@@ -79,6 +85,10 @@ if __name__ == '__main__':
     logging.basicConfig(filename=LoggingFilename, level=logging.DEBUG, format='%(asctime)s %(message)s')
     starttime = time.time()
     endtime = time.time() + (MaxExecutuionMinutes * 60)
+
+    if TestModeEnabled:
+        print("Testing is enabled - we will not commit anything to Dolphin.")
+        logging.info("Testing is enabled - we will not commit anything to Dolphin.")
 
     sqlitedb = open_database(TransactionDatabaseName)
     logging.info("Transaction Database opened")
