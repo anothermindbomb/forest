@@ -6,7 +6,6 @@ import time
 import logging
 import pyodbc
 
-
 TestModeEnabled=True # If we set this to true, then no commits will be issued on Dolphin.
 
 SQLDriverName = "{ODBC Driver 13 for SQL Server}"
@@ -39,11 +38,12 @@ def update_dolphin_database(dbname, updatesql):
         dolphincursor = dbname.cursor()
         dolphincursor.execute(updatesql)
         if TestModeEnabled:
+            logging.DEBUG("Update Dolphin with {0}".format(sql))
             _ = dbname.rollback() # we just consume the "rows rolled back" message
         else:
             _ = dbname.commit()  # we just consume the "rows updated" message
     except Exception as e:
-        logging.fatal("Dolphin database update failed with {0}, sql = {1}".format(e, updatesql))
+        logging.error("Dolphin database update failed with {0}, sql = {1}".format(e, updatesql))
         _ = dbname.rollback()
         return -1
     return 0
@@ -56,7 +56,7 @@ def update_transactions(transactiondb, documentid, sql):
             "update transactions set is_processed = 1 where docid='{0}' AND update_sql='{1}'".format(documentid, sql))
         _ = transactiondb.commit()  # we just consume the "rows updated" message
     except Exception as e:
-        logging.fatal("Transaction database update failed with {0}, sql = {1}".format(e, sql))
+        logging.error("Transaction database update failed with {0}, sql = {1}".format(e, sql))
         _ = transactiondb.rollback()
         return -1
     return 0
@@ -86,6 +86,8 @@ if __name__ == '__main__':
     starttime = time.time()
     endtime = time.time() + (MaxExecutuionMinutes * 60)
 
+    logging.debug("Execution time is set for {0} minutes.".format(MaxExecutuionMinutes))
+
     if TestModeEnabled:
         print("Testing is enabled - we will not commit anything to Dolphin.")
         logging.info("Testing is enabled - we will not commit anything to Dolphin.")
@@ -106,7 +108,7 @@ if __name__ == '__main__':
         if time.time() > endtime:  # quit when we run out of time.
             break
 
-        returned_rows = cursor.fetchmany(100)
+        returned_rows = cursor.fetchmany(1000)
 
         if len(returned_rows) == 0:  # quit when we run out of transactions.
             break
