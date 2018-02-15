@@ -1,4 +1,9 @@
 # coding=utf-8
+# Project forest - cleanup driver.
+# Steve Flynn - Data Migration.
+#
+# 11th February 2018
+
 import sqlite3
 import subprocess
 import datetime
@@ -6,63 +11,107 @@ import time
 import logging
 import pyodbc
 
-TestModeEnabled=True # If we set this to true, then no commits will be issued on Dolphin.
+# Dolphin ProdSupp: These should all be False for Production runs.
+DolphinTestModeEnabled = True  # If we set this to true, then no commits will be issued to Dolphin
+TransactionsTestModeEnabled = True  # If we set this to true, then no commits will be issued to Sqlite
+RelinkTestModeEnabled = True  # If we set this to true, then no file relinking will take place.
 
-SQLDriverName = "{ODBC Driver 13 for SQL Server}"
-DolphinServerName = "DAYSTATE\SQLEXPRESS"
-DolphinDatabaseName = "DolphinDB"
+# Dolphin ProdSupp: Adjust this value to control the number of minutes this framework should execute for
+# It's in Minutes and flaoting point is fine.
+MaxExecutionMinutes = 30.0  # number of minutes we execute for upon each invocation.
+
+# Dolphin ProdSupp: These need to be configured for Production/UAT dolphin.
+SQLDriverName = "{ODBC Driver 13 for SQL Server}"  # ODBC driver available on Dolphin.
+DolphinServerName = "DAYSTATE\SQLEXPRESS"  # Servername and Instance
+DolphinDatabaseName = "DolphinDB"  # The actual database name.
+
+# Dolphin ProdSupp: You shouldn't need to adjust anything below this point.
 TransactionDatabaseName = "dolphincommands"
-MaxExecutuionMinutes = 1  # number of minutes we execute for upon each invocation.
 LoggingFilename = 'dolphin-cleanup' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
 ReportFile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
-DolphinDBConnectionString = "Driver=" + SQLDriverName + ";Server=" + DolphinServerName + ";Database=" + DolphinDatabaseName + ";Trusted_Connection=yes;"
+DolphinDBConnectionString = "Driver=" + SQLDriverName + \
+                            ";Server=" + DolphinServerName + \
+                            ";Database=" + DolphinDatabaseName + \
+                            ";Trusted_Connection=yes;autocommit=No"
 
 
-def open_database(db_name):
-    db = sqlite3.connect(db_name)
+def open_database(connection: str) -> sqlite3.Connection:
+    try:
+        db = sqlite3.connect(connection)
+    except Exception as e:
+        logging.fatal("Unable to connect to transaction database. Error {0}".format(e))
+        exit()
     return db
 
 
-def open_dolphin_database(connection):
-    db = pyodbc.connect(connection)
+def open_dolphin_database(connection: str) -> pyodbc.Connection:
+    try:
+        db = pyodbc.connect(connection)
+    except Exception as e:
+        logging.fatal("Unable to connection to Dolphin database. Error {0}".format(e))
+        exit()
     return db
 
 
-def execute_dos_cmd(cmd):
-    rc = subprocess.call(cmd, shell=True)
+def execute_dos_cmd(cmd: str) -> int:
+    if RelinkTestModeEnabled:
+        logging.debug("File Test mode is active - we would try to execute {0}".format(cmd))
+        return 0
+    else:
+        rc = subprocess.call(cmd, shell=True)
     return rc
 
 
-def update_dolphin_database(dbname, updatesql):
+def update_dolphin_database(dbname: pyodbc.Connection, updatesql: str) -> int:
+    dolphincursor = dbname.cursor()
     try:
-        dolphincursor = dbname.cursor()
-        dolphincursor.execute(updatesql)
-        if TestModeEnabled:
-            logging.DEBUG("Update Dolphin with {0}".format(sql))
-            _ = dbname.rollback() # we just consume the "rows rolled back" message
+        if DolphinTestModeEnabled:
+            logging.debug("Dolphin Test mode is enabled. We would update Dolphin with {0}".format(updatesql))
+            dbname.rollback()
         else:
-            _ = dbname.commit()  # we just consume the "rows updated" message
+            dolphincursor.execute(updatesql)
+            dbname.commit()
+
     except Exception as e:
         logging.error("Dolphin database update failed with {0}, sql = {1}".format(e, updatesql))
-        _ = dbname.rollback()
+        dbname.rollback()
         return -1
+
+    dolphincursor.close()
     return 0
 
 
-def update_transactions(transactiondb, documentid, sql):
+def update_transactions(transactiondb: sqlite3.Connection, documentid: str, sql: str) -> int:
+    # SQL Server only wants to see single quotes around literals.
+    # SQL Lite wants to see doubled singled quote around literals when we're searching for it, as the SQL has
+    # single quote in it already.
+    # Therefore, I need to ensure that any single quotes in the SQL are doubled up in order to not throw exceptions
+    # within SQL server...
+
+    sql = sql.replace("'", "''")
+
     try:
         transactioncursor = transactiondb.cursor()
-        transactioncursor.execute(
-            "update transactions set is_processed = 1 where docid='{0}' AND update_sql='{1}'".format(documentid, sql))
-        _ = transactiondb.commit()  # we just consume the "rows updated" message
+
+        if TransactionsTestModeEnabled:
+            logging.debug("SQLite Testing enabled - we will commit nothing.")
+            # transactiondb.rollback()
+        else:
+            transactioncursor.execute(
+                "update transactions set is_processed = 1 where docid='{0}' AND update_sql='{1}'".format(documentid,
+                                                                                                         sql))
+            transactiondb.commit()
+
     except Exception as e:
         logging.error("Transaction database update failed with {0}, sql = {1}".format(e, sql))
-        _ = transactiondb.rollback()
+        transactiondb.rollback()
         return -1
+
+    transactioncursor.close()
     return 0
 
 
-def produce_run_report():
+def produce_run_report() -> None:
     print("producing run report")
     cursor.execute('SELECT COUNT(*) FROM transactions WHERE is_processed IS NULL;')
     records_left = cursor.fetchone()[0]
@@ -73,7 +122,8 @@ def produce_run_report():
     return
 
 
-# def test_dolphin_retrieval(dolphindb):  # this is only used in development so ensure SQL server connections were working
+# this is only used in development so ensure SQL server connections were working
+# def test_dolphin_retrieval(dolphindb):
 #     cursor = dolphindb.cursor()
 #     cursor.execute("SELECT * FROM dolphintable")
 #     output = cursor.fetchall()
@@ -84,11 +134,11 @@ def produce_run_report():
 if __name__ == '__main__':
     logging.basicConfig(filename=LoggingFilename, level=logging.DEBUG, format='%(asctime)s %(message)s')
     starttime = time.time()
-    endtime = time.time() + (MaxExecutuionMinutes * 60)
+    endtime = time.time() + (MaxExecutionMinutes * 60)
 
-    logging.debug("Execution time is set for {0} minutes.".format(MaxExecutuionMinutes))
+    logging.debug("Execution time is set for {0} minutes.".format(MaxExecutionMinutes))
 
-    if TestModeEnabled:
+    if DolphinTestModeEnabled:
         print("Testing is enabled - we will not commit anything to Dolphin.")
         logging.info("Testing is enabled - we will not commit anything to Dolphin.")
 
@@ -101,16 +151,16 @@ if __name__ == '__main__':
     # test_dolphin_retrieval(dolphindb)
 
     cursor = sqlitedb.cursor()
-    cursor.execute('SELECT * FROM transactions WHERE is_processed IS NULL;')
+    cursor.execute('SELECT docid, update_sql, del_and_link_cmd FROM transactions WHERE is_processed IS NULL;')
 
     while True:
 
         if time.time() > endtime:  # quit when we run out of time.
             break
 
-        returned_rows = cursor.fetchmany(1000)
+        returned_rows = cursor.fetchmany(100)
 
-        if len(returned_rows) == 0:  # quit when we run out of transactions.
+        if len(returned_rows) == 0 or returned_rows is None:  # quit when we run out of transactions.
             break
 
         for row in returned_rows:
@@ -132,7 +182,7 @@ if __name__ == '__main__':
             if dos_cmd_rc == 0 & sql_update_rc == 0:
                 update_transactions(sqlitedb, docid, sql)
 
-            time.sleep(0.1)  # sleep for a fraction of a second. Tune depending on what Production can handle
+                # time.sleep(0.1)  # sleep for a fraction of a second. Tune depending on what Production can handle
 
 produce_run_report()
 sqlitedb.close()
