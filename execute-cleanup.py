@@ -1,5 +1,5 @@
 # coding=utf-8
-# Project forest - cleanup driver.
+# Project Forest - cleanup driver.
 # Steve Flynn - Data Migration.
 #
 # 11th February 2018
@@ -17,7 +17,7 @@ TransactionsTestModeEnabled = True  # If we set this to true, then no commits wi
 RelinkTestModeEnabled = True  # If we set this to true, then no file relinking will take place.
 
 # Dolphin ProdSupp: Adjust this value to control the number of minutes this framework should execute for
-# It's in Minutes and flaoting point is fine.
+# It's in Minutes and floating point is fine.
 MaxExecutionMinutes = 30.0  # number of minutes we execute for upon each invocation.
 
 # Dolphin ProdSupp: These need to be configured for Production/UAT dolphin.
@@ -35,7 +35,7 @@ DolphinDBConnectionString = "Driver=" + SQLDriverName + \
                             ";Trusted_Connection=yes;autocommit=No"
 
 
-def open_database(connection: str) -> sqlite3.Connection:
+def open_sqlite3_database(connection: str) -> sqlite3.Connection:
     try:
         db = sqlite3.connect(connection)
     except Exception as e:
@@ -142,7 +142,7 @@ if __name__ == '__main__':
         print("Testing is enabled - we will not commit anything to Dolphin.")
         logging.info("Testing is enabled - we will not commit anything to Dolphin.")
 
-    sqlitedb = open_database(TransactionDatabaseName)
+    sqlitedb = open_sqlite3_database(TransactionDatabaseName)
     logging.info("Transaction Database opened")
 
     dolphindb = open_dolphin_database(DolphinDBConnectionString)
