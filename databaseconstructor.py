@@ -64,8 +64,7 @@ def insert_command_file(cmd_filename):
                     print("{0}: {1} records inserted and commited".format(datetime.datetime.now(), count))
                     db.commit()
             except Exception as e:
-                pass
-                # print("{0}\n Insertion of {1} {2} {3}".format(e, docid, sqlcmd, linkcmd))
+                print("{0}\n Failed insertion of {1} {2} {3}".format(e, docid, sqlcmd, linkcmd))
     db.commit()
     print("Data completed insertion at {0}".format(datetime.datetime.now()))
     db.close()
