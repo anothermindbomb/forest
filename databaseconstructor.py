@@ -33,8 +33,6 @@ CREATE TABLE transactions (
 ''')
     db.commit()
 
-    # build our sql index once we''ve populated the table
-
     cursor.execute('''CREATE UNIQUE INDEX sql_index ON transactions(docid ASC, update_sql ASC);''')
 
     db.close()
@@ -47,10 +45,12 @@ It assumes the commands are in "docid, sql, link" order.
 
 
 def insert_command_file(cmd_filename):
+    count = 0
     db = sqlite3.connect(database_name)
     cursor = db.cursor()
     with open(cmd_filename) as f:
         for line in f:
+            count += 1
             docid = line
             # assert (len(docid) <= 37) # stop if we find a weird docid
             sqlcmd = f.readline().replace("\t", "")  # strip embedded tabs out
@@ -60,15 +60,19 @@ def insert_command_file(cmd_filename):
             try:
                 cursor.execute('INSERT INTO transactions (docid, update_sql, del_and_link_cmd) VALUES (?,?,?)',
                                (docid, sqlcmd, linkcmd))
-                db.commit()
+                if count % 1000 == 0:
+                    print("{0}: {1} records inserted and commited".format(datetime.date.now(), count))
+                    db.commit()
             except Exception as e:
                 pass
                 # print("{0}\n Insertion of {1} {2} {3}".format(e, docid, sqlcmd, linkcmd))
+    db.commit()
+    print("Data completed insertion at {0}".format(datetime.datetime.now()))
     db.close()
 
 
 if __name__ == '__main__':
-    print(datetime.datetime.now())
+    print("Start insertion at {0}".format(datetime.datetime.now()))
     try:
         os.remove(database_name)  # remove it if an old one exists
     except FileNotFoundError as e:
@@ -77,5 +81,5 @@ if __name__ == '__main__':
     create_database_table(database_name)  # create the database.
     insert_command_file(command_filename)  # read the list of commands to be executed and insert into sqlite3 table
 
-    print(datetime.datetime.now())
+    print("Data inserted and indexes built at {0}".format(datetime.datetime.now()))
     # we're done!
