@@ -26,7 +26,7 @@ DolphinServerName = "DAYSTATE\SQLEXPRESS"  # Servername and Instance
 DolphinDatabaseName = "DolphinDB"  # The actual database name.
 
 # Dolphin ProdSupp: You shouldn't need to adjust anything below this point.
-TransactionDatabaseName = "dolphincommands"
+TransactionDatabaseName = "dolphincommands.sqlite3"
 LoggingFilename = 'dolphin-cleanup' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
 ReportFile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
 DolphinDBConnectionString = "Driver=" + SQLDriverName + \
