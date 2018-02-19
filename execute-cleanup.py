@@ -21,11 +21,15 @@ RelinkTestModeEnabled = True  # If we set this to true, then no file relinking w
 MaxExecutionMinutes = 30.0  # number of minutes we execute for upon each invocation.
 
 # Dolphin ProdSupp: These need to be configured for Production/UAT dolphin.
-SQLDriverName = "{ODBC Driver 13 for SQL Server}"  # ODBC driver available on Dolphin.
-DolphinServerName = "DAYSTATE\SQLEXPRESS"  # Servername and Instance
-DolphinDatabaseName = "DolphinDB"  # The actual database name.
+SQLDriverName = "{SQL Server Native Client 10.0}" # ODBC driver available on Dolphin.
+# SQLDriverName = "{ODBC Driver 13 for SQL Server}" # Used on Daystate for initial creation.
+# DolphinServerName = "DAYSTATE\SQLEXPRESS"  # Servername and Instance used for initial creation
+DolphinServerName = "10.174.246.11"  # Servername for VM1
+DolphinDatabaseName = "forest_fl"  # Database name for VM1.
 
-# Dolphin ProdSupp: You shouldn't need to adjust anything below this point.
+''' Dolphin ProdSupp: You shouldn't need to adjust anything below this point.
+'''
+
 TransactionDatabaseName = "dolphincommands.sqlite3"
 LoggingFilename = 'dolphin-cleanup' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
 ReportFile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
