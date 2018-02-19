@@ -6,8 +6,9 @@
 
 import sqlite3
 import os
+import datetime
 
-database_name = 'dolphincommands'
+database_name = 'dolphincommands.sqlite3'
 command_filename = 'executioncommands.txt'
 
 '''
@@ -20,24 +21,28 @@ def create_database_table(db_name):
     db = sqlite3.connect(db_name)
     cursor = db.cursor()
     cursor.execute('''
-CREATE TABLE transactions
-(
-  docid TEXT PRIMARY KEY,
-  update_sql TEXT,
-  del_and_link_cmd TEXT,
-  is_processed BOOLEAN,
-  error_message TEXT
-)''')
+CREATE TABLE transactions (
+    docid            TEXT (40)   NOT NULL,
+    update_sql       TEXT (400)  NOT NULL
+                                 PRIMARY KEY
+                                 UNIQUE,
+    del_and_link_cmd TEXT (300)  NOT NULL,
+    is_processed     BOOLEAN (1) DEFAULT (0),
+    error_message    TEXT
+);
+''')
     db.commit()
+
+    # build our sql index once we''ve populated the table
+
+    cursor.execute('''CREATE UNIQUE INDEX sql_index ON transactions(docid ASC, update_sql ASC);''')
+
     db.close()
 
 
 '''
 This function reads the "executioncommands.txt" file, 3 lines at a time and inserts them into the transaction table
-It assumes the commands are in "docid, sql, link" order and the docid must be unique, as it's our primary key.
-
-Any duplicate docid, will simply cause this to error out. It's one-shot code so any duplicate docid needs
-to be looked at anyway, so we don't bother with any error handling.  
+It assumes the commands are in "docid, sql, link" order.
 '''
 
 
@@ -47,17 +52,30 @@ def insert_command_file(cmd_filename):
     with open(cmd_filename) as f:
         for line in f:
             docid = line
-            sqlcmd = f.readline()
+            # assert (len(docid) <= 37) # stop if we find a weird docid
+            sqlcmd = f.readline().replace("\t", "")  # strip embedded tabs out
+            # assert(sqlcmd.startswith("UPDATE ")) # stop if we don't find an update where we expected
             linkcmd = f.readline()
-            cursor.execute('INSERT INTO transactions (docid, update_sql, del_and_link_cmd) VALUES (?,?,?)',
-                           (docid, sqlcmd, linkcmd))
-            db.commit()
+            # assert(linkcmd.startswith("del ")) # stop if we don't find a delete where we expected
+            try:
+                cursor.execute('INSERT INTO transactions (docid, update_sql, del_and_link_cmd) VALUES (?,?,?)',
+                               (docid, sqlcmd, linkcmd))
+                db.commit()
+            except Exception as e:
+                pass
+                # print("{0}\n Insertion of {1} {2} {3}".format(e, docid, sqlcmd, linkcmd))
     db.close()
 
 
 if __name__ == '__main__':
-    os.remove(database_name)  # remove it if an old one exists
-    create_database_table(database_name)  # create the database.
-    insert_command_file(command_filename)  # read the list of commands to be executed ad stick them in the sqlite3 table
+    print(datetime.datetime.now())
+    try:
+        os.remove(database_name)  # remove it if an old one exists
+    except FileNotFoundError as e:
+        pass
 
+    create_database_table(database_name)  # create the database.
+    insert_command_file(command_filename)  # read the list of commands to be executed and insert into sqlite3 table
+
+    print(datetime.datetime.now())
     # we're done!
