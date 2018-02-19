@@ -27,7 +27,7 @@ CREATE TABLE transactions (
                                  PRIMARY KEY
                                  UNIQUE,
     del_and_link_cmd TEXT (300)  NOT NULL,
-    is_processed     BOOLEAN (1) DEFAULT (0),
+    is_processed     BOOLEAN (1),
     error_message    TEXT
 );
 ''')
@@ -60,8 +60,8 @@ def insert_command_file(cmd_filename):
             try:
                 cursor.execute('INSERT INTO transactions (docid, update_sql, del_and_link_cmd) VALUES (?,?,?)',
                                (docid, sqlcmd, linkcmd))
-                if count % 1000 == 0:
-                    print("{0}: {1} records inserted and commited".format(datetime.date.now(), count))
+                if count % 5000 == 0:  # We only commit so frequently as it's an expensive operation.
+                    print("{0}: {1} records inserted and commited".format(datetime.datetime.now(), count))
                     db.commit()
             except Exception as e:
                 pass
