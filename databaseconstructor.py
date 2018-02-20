@@ -27,13 +27,12 @@ CREATE TABLE transactions (
                                  PRIMARY KEY
                                  UNIQUE,
     del_and_link_cmd TEXT (300)  NOT NULL,
-    is_processed     BOOLEAN (1) DEFAULT (0),
-    error_message    TEXT
+    is_processed     BOOLEAN (1)
 );
 ''')
     db.commit()
 
-    cursor.execute('''CREATE UNIQUE INDEX sql_index ON transactions(docid ASC, update_sql ASC);''')
+    # cursor.execute('''CREATE UNIQUE INDEX sql_index ON transactions(docid ASC, update_sql ASC);''')
 
     db.close()
 
@@ -48,24 +47,24 @@ def insert_command_file(cmd_filename):
     count = 0
     db = sqlite3.connect(database_name)
     cursor = db.cursor()
-    with open(cmd_filename) as f:
+    with open(cmd_filename, encoding='utf-8') as f:
         for line in f:
             count += 1
             docid = line
             # assert (len(docid) <= 37) # stop if we find a weird docid
             sqlcmd = f.readline().replace("\t", "")  # strip embedded tabs out
-            # assert(sqlcmd.startswith("UPDATE ")) # stop if we don't find an update where we expected
+            assert(sqlcmd.startswith("UPDATE ")) # stop if we don't find an update where we expected
             linkcmd = f.readline()
-            # assert(linkcmd.startswith("del ")) # stop if we don't find a delete where we expected
+            assert(linkcmd.startswith("del ")) # stop if we don't find a delete where we expected
             try:
                 cursor.execute('INSERT INTO transactions (docid, update_sql, del_and_link_cmd) VALUES (?,?,?)',
                                (docid, sqlcmd, linkcmd))
-                if count % 1000 == 0:
+                if count % 10000 == 0:
                     print("{0}: {1} records inserted and commited".format(datetime.datetime.now(), count))
                     db.commit()
             except Exception as e:
                 pass
-                # print("{0}\n Insertion of {1} {2} {3}".format(e, docid, sqlcmd, linkcmd))
+                print("{0}\n Insertion of {1} {2} {3}".format(e, docid, sqlcmd, linkcmd))
     db.commit()
     print("Data completed insertion at {0}".format(datetime.datetime.now()))
     db.close()
