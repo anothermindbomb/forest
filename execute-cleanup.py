@@ -162,7 +162,7 @@ if __name__ == '__main__':
         if time.time() > endtime:  # quit when we run out of time.
             break
 
-        returned_rows = cursor.fetchmany(100)
+        returned_rows = cursor.fetchmany(500)
 
         if len(returned_rows) == 0 or returned_rows is None:  # quit when we run out of transactions.
             break

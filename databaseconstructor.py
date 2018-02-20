@@ -61,7 +61,7 @@ def insert_command_file(cmd_filename):
                 cursor.execute('INSERT INTO transactions (docid, update_sql, del_and_link_cmd) VALUES (?,?,?)',
                                (docid, sqlcmd, linkcmd))
                 if count % 1000 == 0:
-                    print("{0}: {1} records inserted and commited".format(datetime.date.now(), count))
+                    print("{0}: {1} records inserted and commited".format(datetime.datetime.now(), count))
                     db.commit()
             except Exception as e:
                 pass
