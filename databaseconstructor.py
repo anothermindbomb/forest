@@ -8,8 +8,8 @@ import sqlite3
 import os
 import datetime
 
-database_name = 'dolphincommands.sqlite3'
-command_filename = 'executioncommands.txt'
+database_name = 'dolphincommands-singletest.sqlite3'
+command_filename = 'executioncommands-singletest.txt'
 
 '''
 This function creates our transaction database. It assumes that the database does not already exist, because
