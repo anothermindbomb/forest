@@ -157,11 +157,13 @@ if __name__ == '__main__':
     while True:
 
         if time.time() > endtime:  # quit when we run out of time.
+            logging.info("Ending run due to maximum execution time limit reached")
             break
 
         returned_rows = cursor.fetchmany(50)
 
         if len(returned_rows) == 0 or returned_rows is None:  # quit when we run out of transactions.
+            logging.info("Ending run because we have no further work to process")
             break
 
         for row in returned_rows:
