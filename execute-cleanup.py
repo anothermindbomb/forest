@@ -125,12 +125,12 @@ def produce_run_report() -> None:
 
 
 # this is only used in development to ensure SQL server connections were working
-def test_dolphin_retrieval(dolphindb):
-    cursor = dolphindb.cursor()
-    cursor.execute("SELECT * FROM dolphintable")
-    output = cursor.fetchall()
-    for line in output:
-        print(line)
+# def test_dolphin_retrieval(dolphindb):
+#     cursor = dolphindb.cursor()
+#     cursor.execute("SELECT * FROM dolphintable")
+#     output = cursor.fetchall()
+#     for line in output:
+#         print(line)
 
 
 if __name__ == '__main__':
