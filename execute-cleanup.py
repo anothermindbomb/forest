@@ -23,8 +23,8 @@ ReportFile = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ".log"
 
 parser = argparse.ArgumentParser(description='Re-links Extracted Forest Images and cleans metadata')
 parser.add_argument('-d', '--dsn', required=True, default="DolphinDB", dest='DolphinDSN',
-                    help='Name of the ODBC System DSN which points to the Dolphin Database')
-parser.add_argument('-u', '--user', required=False, default="FlynnS", dest='DolphinUser',
+                    help='Name of the ODBC User DSN which points to the Dolphin Database')
+parser.add_argument('-u', '--user', required=True, default="FlynnS", dest='DolphinUser',
                     help='SQL User to log into Dolphin')
 parser.add_argument('-p', '--password', required=True, default="BadPassword", dest='DolphinUserPassword',
                     help='Password for the SQL User')
@@ -117,20 +117,11 @@ def update_transactions(transactiondb: sqlite3.Connection, documentid: str, sql:
 
 
 def produce_run_report() -> None:
-    print("producing run report")
+    print("Producing run report")
     cursor.execute('SELECT COUNT(*) FROM transactions WHERE is_processed IS NULL;')
     records_left = cursor.fetchone()[0]
     logging.info("{0} records left to process in future runs".format(records_left))
     return
-
-
-# this is only used in development to ensure SQL server connections were working
-# def test_dolphin_retrieval(dolphindb):
-#     cursor = dolphindb.cursor()
-#     cursor.execute("SELECT * FROM dolphintable")
-#     output = cursor.fetchall()
-#     for line in output:
-#         print(line)
 
 
 if __name__ == '__main__':
@@ -148,8 +139,6 @@ if __name__ == '__main__':
 
     dolphindb = open_dolphin_database(DolphinDBConnectionString)
     logging.info("Dolphin Database opened")
-
-    # test_dolphin_retrieval(dolphindb)
 
     cursor = sqlitedb.cursor()
     cursor.execute('SELECT docid, update_sql, del_and_link_cmd FROM transactions WHERE is_processed IS NULL;')
