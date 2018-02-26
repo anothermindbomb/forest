@@ -8,8 +8,8 @@ import sqlite3
 import os
 import datetime
 
-database_name = 'dolphincommands-singletest.sqlite3'
-command_filename = 'executioncommands-singletest.txt'
+database_name = 'dolphincommands-fulltest.sqlite3'
+command_filename = 'T_Drive_Statements.csv'
 
 '''
 This function creates our transaction database. It assumes that the database does not already exist, because
@@ -38,7 +38,7 @@ CREATE TABLE transactions (
 
 
 '''
-This function reads the "executioncommands.txt" file, 3 lines at a time and inserts them into the transaction table
+This function reads the command file, 3 lines at a time and inserts them into the transaction table
 It assumes the commands are in "docid, sql, link" order.
 '''
 
@@ -51,7 +51,7 @@ def insert_command_file(cmd_filename):
         for line in f:
             count += 1
             docid = line
-            # assert (len(docid) <= 37) # stop if we find a weird docid
+            assert (len(docid) <= 38) # stop if we find a weird docid
             sqlcmd = f.readline().replace("\t", "")  # strip embedded tabs out
             assert(sqlcmd.startswith("UPDATE ")) # stop if we don't find an update where we expected
             linkcmd = f.readline()
