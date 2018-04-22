@@ -37,6 +37,7 @@ DolphinDBConnectionString = "DSN=" + options.DolphinDSN + ";UID=" + options.Dolp
 
 
 def open_sqlite3_database(connection: str) -> sqlite3.Connection:
+    db = None
     try:
         db = sqlite3.connect(connection)
     except Exception as e:
@@ -47,6 +48,7 @@ def open_sqlite3_database(connection: str) -> sqlite3.Connection:
 
 def open_dolphin_database(connection: str) -> pyodbc.Connection:
     logging.debug("Using connection string: {0}".format(connection))
+    db = None
     try:
         db = pyodbc.connect(connection)
     except Exception as e:
